@@ -35,6 +35,8 @@
     }
     .content{
         white-space: pre-wrap;
+        word-break: break-all;
+        word-wrap:break-word;
         overflow: auto;
         padding: 0 10%;
         font-size: 20px;
