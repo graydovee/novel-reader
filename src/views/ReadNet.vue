@@ -14,10 +14,10 @@
                 direction="ttb">
             <el-row style="text-align: center">
                 <el-col :span="8" :offset="4">
-                    <el-button @click="$router.push(`/`)">返回主页</el-button>
+                    <el-button @click="$router.push('/')">返回主页</el-button>
                 </el-col>
                 <el-col :span="8">
-                    <el-button @click="goList">返回章节目录</el-button>
+                    <el-button @click="$router.push('/net')">返回网络阅读</el-button>
                 </el-col>
             </el-row>
         </el-drawer>

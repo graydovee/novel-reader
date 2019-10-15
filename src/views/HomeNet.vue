@@ -4,6 +4,13 @@
             <el-col style="text-align: center"><h3>{{title}}</h3></el-col>
         </el-row>
         <el-row>
+            <el-col :offset="2" :span="2">
+                <div class="back" @click="toNet">
+                    <span class="el-icon-s-home"></span>
+                </div>
+            </el-col>
+        </el-row>
+        <el-row>
             <el-col :span="16" :offset="4">
                 <el-input placeholder="请输入内容" v-model="searchName" class="input-with-select">
                     <el-button slot="append" icon="el-icon-search" @click="search"></el-button>
@@ -51,8 +58,12 @@ export default {
     },
     methods:{
         search(){
-            if (!this.searchName && this.search().length<2){
+            if (!this.searchName){
                 this.title = '在线搜索'
+                return
+            }
+            if (this.searchName.length < 2) {
+                this.$message.error("关键字过短")
                 return
             }
             this.loading = true
@@ -73,6 +84,9 @@ export default {
                 this.loading = false
             })
         },
+        toNet(){
+            this.$router.push('/')
+        },
         list(row){
             this.$router.push({
                 name: 'netList',
@@ -88,5 +102,8 @@ export default {
 </script>
 
 <style scoped>
-
+    .back{
+        font-size: 20px;
+        margin-bottom: 10px;
+    }
 </style>

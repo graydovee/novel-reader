@@ -4,6 +4,13 @@
             <el-col style="text-align: center"><h3>{{title}}</h3></el-col>
         </el-row>
         <el-row>
+            <el-col :offset="2" :span="2">
+                <div class="back" @click="toNet">
+                    <span class="el-icon-s-promotion"></span>
+                </div>
+            </el-col>
+        </el-row>
+        <el-row>
             <el-col :span="16" :offset="4">
                 <el-input placeholder="请输入内容" v-model="searchName" class="input-with-select">
                     <el-button slot="append" icon="el-icon-search" @click="search"></el-button>
@@ -42,6 +49,7 @@
                 </el-pagination>
             </el-col>
         </el-row>
+
     </div>
 </template>
 
@@ -103,6 +111,9 @@ export default {
                 this.$message.error("请求异常")
             })
         },
+        toNet(){
+            this.$router.push('/net')
+        },
         search(){
             if (!this.searchName){
                 this.title = '全部小说'
@@ -136,5 +147,8 @@ export default {
 </script>
 
 <style scoped>
-
+.back{
+    font-size: 20px;
+    margin-bottom: 10px;
+}
 </style>
