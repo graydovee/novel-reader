@@ -3,8 +3,8 @@
         <div style="overflow:auto">
             <bookContent v-for="chapter in chapters" :key="chapter.id" :chapter="chapter"></bookContent>
         </div>
-        <p v-if="loading">加载中...</p>
-        <p v-if="noMore">没有更多了</p>
+        <p v-if="loading" class="inf">加载中...</p>
+        <p v-if="noMore" class="inf">没有更多了</p>
         <div class="draw" @click="drawer = true">
             <span class="el-icon-arrow-down"></span>
         </div>
@@ -81,7 +81,7 @@ export default {
             let scrollY = window.scrollY
             let height = document.body.scrollHeight
             let screen = window.screen.height;
-            if(height - scrollY - screen < 50){
+            if(height - scrollY - screen < 5){
                 this.getNextPage();
             }
         },
@@ -103,7 +103,7 @@ export default {
         },
         loadMore: lodash.throttle(function(){
             this.handleScroll()
-        },500)
+        },1000)
     },
     created(){
         this.bookId = this.$route.params.bookId;
@@ -150,5 +150,8 @@ p{
     top: 1vh;
     right: 1vh;
     font-size: 30px;
+}
+.inf{
+    padding: 5% 0;
 }
 </style>

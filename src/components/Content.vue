@@ -1,6 +1,7 @@
 <template>
     <div class="chapter" id="chapter">
         <h1 class="title">{{chapter.title}}</h1>
+        <div style="height: 500px"  v-if="loading" v-loading="loading" element-loading-background="antiquewhite"></div>
         <div class="content" style="white-space: pre-wrap;">{{content.info}}</div>
     </div>
 </template>
@@ -12,11 +13,13 @@
         data(){
             return {
                 content:{},
+                loading: true
             }
         },
         created(){
             this.$axios.get('content?id='+this.chapter.contentId).then(res=>{
                 this.content = res.data;
+                this.loading = false
             })
         }
     }
@@ -42,4 +45,5 @@
         font-size: 20px;
         line-height: 30px;
     }
+
 </style>
