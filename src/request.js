@@ -2,8 +2,8 @@ import axios from 'axios'
 import $qs from 'qs'
 
 if (process.env.NODE_ENV === 'development') {
-    axios.defaults.baseURL = 'https://admin.ndovel.com';
-    // axios.defaults.baseURL = 'http://localhost:8090';
+    // axios.defaults.baseURL = 'https://admin.ndovel.com';
+    axios.defaults.baseURL = 'http://localhost:8090';
 } else {
     axios.defaults.baseURL = 'https://admin.ndovel.com';
 }

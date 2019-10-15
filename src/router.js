@@ -14,13 +14,28 @@ export default new Router({
     },
     {
       path: '/list/:bookId',
-      name: 'home',
+      name: 'list',
       component: () => import('./views/List.vue')
     },
     {
       path: '/read/:bookId',
-      name: 'home',
+      name: 'read',
       component: () => import('./views/Read.vue')
+    },
+    {
+      path: '/net',
+      name: 'homeNet',
+      component: () => import('./views/HomeNet.vue')
+    },
+    {
+      path: '/net/list',
+      name: 'netList',
+      component: () => import('./views/ListNet.vue')
+    },
+    {
+      path: '/net/read',
+      name: 'netRead',
+      component: () => import('./views/ReadNet.vue')
     }
   ]
 })

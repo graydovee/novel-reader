@@ -1,26 +1,22 @@
 <template>
     <div class="chapter" id="chapter">
-        <h1 class="title">{{chapter.title}}</h1>
-        <div style="height: 800px"  v-if="loading" v-loading="loading" element-loading-background="antiquewhite"></div>
-        <div class="content" style="white-space: pre-wrap;">{{content.info}}</div>
+        <h1 class="title">{{title}}</h1>
+        <div class="content" style="white-space: pre-wrap;">{{content}}</div>
     </div>
 </template>
 
 <script>
     export default {
         name: 'Content',
-        props: ['chapter'],
-        data(){
-            return {
-                content:{},
-                loading: true
+        props: {
+            title: {
+                type: String,
+                default: ''
+            },
+            content: {
+                type: String,
+                default: ''
             }
-        },
-        created(){
-            this.$axios.get('content?id='+this.chapter.contentId).then(res=>{
-                this.content = res.data;
-                this.loading = false
-            })
         }
     }
 </script>
