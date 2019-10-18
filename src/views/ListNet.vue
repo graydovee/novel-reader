@@ -31,6 +31,7 @@
 </template>
 
 <script>
+    import bus from '@/utils/bus'
     export default {
         name: 'List',
         data() {
@@ -42,6 +43,7 @@
         },
         methods:{
             read (row) {
+                bus.$data.chapter_s = row
                 this.$router.push({
                     name: 'netRead',
                     params: {
@@ -56,6 +58,7 @@
                 this.$axios.post('/spider/index', data).then(res => {
                     if (res.code === 200) {
                         this.tableData = res.data
+                        bus.$data.chapter = res.data
                     } else {
                         this.$message.error("数据异常")
                     }
@@ -74,8 +77,14 @@
             if (this.url){
                 this.getData()
             } else {
-                this.$message.error("无效跳转")
-                this.loading = false;
+
+                if (bus.$data.book) {
+                    this.tableData = bus.$data.chapter
+                    this.loading = false
+                } else{
+                    this.$message.error("无效跳转")
+                    this.loading = false;
+                }
             }
         }
     }

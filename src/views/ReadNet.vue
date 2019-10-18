@@ -3,8 +3,8 @@
         <div style="overflow:auto">
             <content-net v-for="chapter in chapters" :key="chapter.id" :title="chapter.title" :content="chapter.content"></content-net>
         </div>
-        <p v-if="loading" style="height: 100px" v-loading="loading" element-loading-background="antiquewhite" element-loading-text="加载中..."></p>
-        <p v-if="noMore" class="inf">没有更多了</p>
+        <p class="bg" v-if="loading" style="height: 100px" v-loading="loading" element-loading-background="antiquewhite" element-loading-text="加载中..."></p>
+        <p v-if="noMore" class="inf bg">没有更多了</p>
         <div class="draw" @click="drawer = true">
             <span class="el-icon-arrow-down"></span>
         </div>
@@ -14,10 +14,15 @@
                 direction="ttb">
             <el-row style="text-align: center">
                 <el-col :span="8" :offset="4">
-                    <el-button @click="$router.push('/')">返回主页</el-button>
+                    <el-button @click="$router.push('/net')">返回主页</el-button>
                 </el-col>
                 <el-col :span="8">
-                    <el-button @click="$router.push('/net')">返回网络阅读</el-button>
+                    <el-button @click="$router.push('/net/list')">返回章节目录</el-button>
+                </el-col>
+            </el-row>
+            <el-row>
+                <el-col :span="8" :offset="8">
+                    <el-button type="primary" @click="spider_down" style="margin-top: 10px">从此章开始爬取</el-button>
                 </el-col>
             </el-row>
         </el-drawer>
@@ -26,6 +31,7 @@
 
 <script>
 import ContentNet from '@/components/ContentNet'
+import bus from '@/utils/bus'
 import lodash from 'lodash'
 
 export default {
@@ -52,7 +58,6 @@ export default {
                     let data = res.data
                     this.chapters.push(data);
                     this.url = data.url
-
                 } else {
                     this.$message.error("获取失败")
                 }
@@ -94,6 +99,46 @@ export default {
                 localStorage.setItem("store", JSON.stringify(data));
             }
         },
+        spider_down(){
+            this.$prompt('请输入管理员口令', '提示', {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+            }).then(({ value }) => {
+                let data = {
+                    bookName: bus.$data.book_s.name,
+                    authorName: bus.$data.book_s.author,
+                    url: bus.$data.chapter_s.url,
+                    token: value
+                }
+                if (bus.$data.book_s.name && bus.$data.book_s.author && bus.$data.chapter_s.url) {
+                    this.$msgbox({
+                        title: '提示',
+                        message: this.$createElement('p', {style: 'background-color:white;padding: 0 10%'} , [
+                            this.$createElement('p', null ,`书名：${data.bookName}`),
+                            this.$createElement('p', null ,`作者：${data.authorName}`),
+                            this.$createElement('p', null ,`首章地址：${data.url}`)
+                        ]),
+                        showCancelButton: true,
+                        cancelButtonText: '取消',
+                        confirmButtonText: '开始爬取'
+                    }).then(() => {
+                        this.$axios.post('/book', data).then(res=>{
+                            if (res.code === 200) {
+                                this.$message.success("正在爬取")
+                            } else {
+                                this.$message.error(res.data)
+                            }
+                        }).catch(()=>{
+                            this.$message.error("爬取失败")
+                        })
+                    })
+
+                } else {
+                    this.$message.error("信息不完整")
+                }
+            })
+
+        },
         goList(){
             this.$router.push(`/list/${this.bookId}`)
         },
@@ -116,7 +161,7 @@ export default {
 
 <style scoped lang="scss">
 
-p{
+.bg{
     background-color: antiquewhite;
     text-align: center;
     padding: 0;

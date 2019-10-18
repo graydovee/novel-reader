@@ -84,8 +84,8 @@
             getData(val){
                 let data = {
                     bookId: this.bookId,
-                    pageIndex: val - 1,
-                    pageSize: this.size
+                    index: val - 1,
+                    size: this.size
                 }
                 this.$axios.get('/chapter', data).then(res => {
                     if (res.code === 200) {

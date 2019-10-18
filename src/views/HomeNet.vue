@@ -46,6 +46,8 @@
 </template>
 
 <script>
+import bus from '@/utils/bus'
+
 export default {
     name: 'HomeNet',
     data() {
@@ -75,6 +77,7 @@ export default {
             this.$axios.post('/spider/search', data).then(res => {
                 if (res.code === 200) {
                     this.tableData = res.data
+                    bus.$data.book = res.data
                 } else {
                     this.$message.error("数据异常")
                 }
@@ -88,6 +91,7 @@ export default {
             this.$router.push('/')
         },
         list(row){
+            bus.$data.book_s = row
             this.$router.push({
                 name: 'netList',
                 params: {
@@ -97,6 +101,9 @@ export default {
         }
     },
     created(){
+        if (bus.$data.book) {
+            this.tableData = bus.$data.book
+        }
     }
 }
 </script>
