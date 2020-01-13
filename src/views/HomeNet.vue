@@ -24,21 +24,20 @@
                     v-loading="loading"
                     style="width: 100%">
                     <el-table-column
-                        prop="name"
-                        label="书名">
+                        prop="title"
+                        label="书名"
+                        align="center">
                     </el-table-column>
 
                     <el-table-column
-                            prop="author"
-                            label="作者">
-                    </el-table-column>
-
-                    <el-table-column
-                            label="操作">
+                            prop="title"
+                            label="操作"
+                            align="center">
                         <template slot-scope="scope">
-                            <el-button @click="list(scope.row)" type="text" size="small">章节</el-button>
+                            <el-button @click="list(scope.row)" type="text">详情</el-button>
                         </template>
                     </el-table-column>
+
                 </el-table>
             </el-col>
         </el-row>

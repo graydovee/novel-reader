@@ -100,44 +100,7 @@ export default {
             }
         },
         spider_down(){
-            this.$prompt('请输入管理员口令', '提示', {
-                confirmButtonText: '确定',
-                cancelButtonText: '取消',
-            }).then(({ value }) => {
-                let data = {
-                    bookName: bus.$data.book_s.name,
-                    authorName: bus.$data.book_s.author,
-                    url: bus.$data.chapter_s.url,
-                    token: value
-                }
-                if (bus.$data.book_s.name && bus.$data.book_s.author && bus.$data.chapter_s.url) {
-                    this.$msgbox({
-                        title: '提示',
-                        message: this.$createElement('p', {style: 'background-color:white;padding: 0 10%'} , [
-                            this.$createElement('p', null ,`书名：${data.bookName}`),
-                            this.$createElement('p', null ,`作者：${data.authorName}`),
-                            this.$createElement('p', null ,`首章地址：${data.url}`)
-                        ]),
-                        showCancelButton: true,
-                        cancelButtonText: '取消',
-                        confirmButtonText: '开始爬取'
-                    }).then(() => {
-                        this.$axios.post('/book', data).then(res=>{
-                            if (res.code === 200) {
-                                this.$message.success("正在爬取")
-                            } else {
-                                this.$message.error(res.data)
-                            }
-                        }).catch(()=>{
-                            this.$message.error("爬取失败")
-                        })
-                    })
-
-                } else {
-                    this.$message.error("信息不完整")
-                }
-            })
-
+            this.$message.error("该功能暂未开放")
         },
         goList(){
             this.$router.push(`/list/${this.bookId}`)

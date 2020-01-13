@@ -36,6 +36,7 @@
         name: 'List',
         data() {
             return {
+                info: {},
                 tableData: [],
                 loading: true,
                 url: '',
@@ -57,8 +58,9 @@
                 }
                 this.$axios.post('/spider/index', data).then(res => {
                     if (res.code === 200) {
-                        this.tableData = res.data
+                        this.info = res.data;
                         bus.$data.chapter = res.data
+                        this.tableData = this.info.chapters
                     } else {
                         this.$message.error("数据异常")
                     }
@@ -79,7 +81,8 @@
             } else {
 
                 if (bus.$data.book) {
-                    this.tableData = bus.$data.chapter
+                    this.info = bus.$data.chapter
+                    this.tableData = this.info.chapters
                     this.loading = false
                 } else{
                     this.$message.error("无效跳转")
