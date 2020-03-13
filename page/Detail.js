@@ -11,11 +11,11 @@ import {
   LayoutAnimation,
   NativeModules,
   TextInput,
-  AsyncStorage,
 } from 'react-native';
 import {getCover, Novel, Chapter} from '../domain';
 import http from '../request';
 import EvilIcons from 'react-native-vector-icons/EvilIcons';
+import AsyncStorage from '@react-native-community/async-storage';
 
 const {UIManager} = NativeModules;
 
@@ -89,6 +89,7 @@ export default class Detail extends React.Component<Props, State> {
         record: props.route.params.chapter,
       };
     }
+    return null;
   }
 
   getPage(): Page {

@@ -6,11 +6,11 @@ import {
   StyleSheet,
   Dimensions,
   TouchableNativeFeedback,
-  AsyncStorage,
 } from 'react-native';
 import {Chapter} from '../domain';
 import http from '../request';
 import type {Novel} from '../domain';
+import AsyncStorage from '@react-native-community/async-storage';
 
 const {width} = Dimensions.get('window');
 
