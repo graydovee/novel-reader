@@ -34,7 +34,6 @@ type State = {
   page: Page,
   totalPages: 1,
   hidden: boolean,
-  timeId: number,
   skipText: string,
   record: Chapter,
 };
@@ -51,11 +50,10 @@ export default class Detail extends React.Component<Props, State> {
       novel: props.route.params.novel,
       page: {
         index: 1,
-        size: 10,
+        size: 50,
       },
       totalPages: 1,
       hidden: false,
-      timeId: 0,
       skipText: '',
       record: null,
     };
@@ -63,7 +61,7 @@ export default class Detail extends React.Component<Props, State> {
       title: props.route.params.novel.name,
     });
     this.renderChapter = this.renderChapter.bind(this);
-    this.getPage = this.getPage.bind(this);
+    this.getNextPage = this.getNextPage.bind(this);
     this.renderInfo = this.renderInfo.bind(this);
     this.searchChapter = this.searchChapter.bind(this);
     this.fetchData = this.fetchData.bind(this);
@@ -92,7 +90,7 @@ export default class Detail extends React.Component<Props, State> {
     return null;
   }
 
-  getPage(): Page {
+  getNextPage(): Page {
     let data: Page = {
       bookId: this.state.novel.id,
       index: this.state.page.index,
@@ -111,7 +109,7 @@ export default class Detail extends React.Component<Props, State> {
       if (this.state.page.index >= this.state.totalPages) {
         return;
       }
-      param = this.getPage();
+      param = this.getNextPage();
     }
     http.get('/chapter', param).then(res => {
       this.setState({
@@ -123,32 +121,29 @@ export default class Detail extends React.Component<Props, State> {
   }
   searchChapter(text: string) {
     let index: number;
-    index = parseInt(text, 10) - 1;
-    if (text) {
-      if (index >= 0 || index < this.state.totalPages) {
-        let param: Page = {
-          bookId: this.state.novel.id,
-          index: this.state.page.index,
-          size: this.state.page.size,
-        };
-        param.index = index;
-        this.setState({
-          index: param.index + 1,
-          size: param.size,
-        });
-        http.get('/chapter', param).then(res => {
-          param.index = param.index + 1;
-          this.setState({
-            chapters: res.data.content,
-            totalPages: res.data.totalPages,
-            skipText: this.state.page.index.toString(),
-          });
-        });
-        return;
-      }
+    index = text ? parseInt(text, 10) - 1 : 0;
+    if (index < 0) {
+      index = 0;
+    } else if (index >= this.state.totalPages) {
+      index = this.state.totalPages - 1;
     }
+    let param: Page = {
+      bookId: this.state.novel.id,
+      index: index,
+      size: this.state.page.size,
+    };
     this.setState({
-      skipText: this.state.page.index,
+      page: {
+        index: index + 1,
+        size: this.state.page.size,
+      },
+    });
+    http.get('/chapter', param).then(res => {
+      this.setState({
+        chapters: res.data.content,
+        totalPages: res.data.totalPages,
+        skipText: this.state.page.index.toString(),
+      });
     });
   }
   renderChapter({item}) {
@@ -237,19 +232,28 @@ export default class Detail extends React.Component<Props, State> {
                 caretHidden={true}
                 clearTextOnFocus={true}
                 keyboardType={'number-pad'}
+                ref={e => (this.textInput = e)}
                 onChangeText={text => {
-                  clearTimeout(this.state.timeId);
-                  let timeId = setTimeout(() => {
-                    this.searchChapter(text);
-                  }, 500);
-
                   this.setState({
-                    timeId: timeId,
                     skipText: text,
                   });
                 }}
+                onFocus={() => {
+                  this.setState({
+                    skipText: '',
+                  });
+                }}
               />
-              <Text style={styles.pageText}>页</Text>
+              <Text style={styles.pageText}>
+                /&nbsp;{this.state.totalPages}页
+              </Text>
+              <TouchableOpacity
+                onPress={() => {
+                  this.textInput.blur();
+                  this.searchChapter(this.state.skipText);
+                }}>
+                <Text style={styles.skip}>跳转</Text>
+              </TouchableOpacity>
             </View>
           </View>
 
@@ -354,6 +358,7 @@ const styles = StyleSheet.create({
     height: 20,
     textAlign: 'center',
     textAlignVertical: 'center',
+    color: '#409EFF',
   },
   continue: {
     fontSize: 15,
@@ -366,5 +371,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     backgroundColor: 'orange',
     color: 'white',
+  },
+  skip: {
+    paddingTop: 0.05 * width,
+    paddingBottom: 0.05 * width,
+    fontSize: 14,
+    marginLeft: 0.02 * width,
+    color: '#409EFF',
   },
 });
