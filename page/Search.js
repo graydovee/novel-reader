@@ -6,7 +6,7 @@ export default class Search extends React.Component {
   render() {
     return (
       <View>
-        <Text>111</Text>
+        <Text>暂未完成</Text>
       </View>
     );
   }

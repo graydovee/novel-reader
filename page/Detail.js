@@ -11,6 +11,7 @@ import {
   LayoutAnimation,
   NativeModules,
   TextInput,
+  AsyncStorage,
 } from 'react-native';
 import {getCover, Novel, Chapter} from '../domain';
 import http from '../request';
@@ -35,6 +36,7 @@ type State = {
   hidden: boolean,
   timeId: number,
   skipText: string,
+  record: Chapter,
 };
 
 type Props = {};
@@ -55,6 +57,7 @@ export default class Detail extends React.Component<Props, State> {
       hidden: false,
       timeId: 0,
       skipText: '',
+      record: null,
     };
     this.props.navigation.setOptions({
       title: props.route.params.novel.name,
@@ -71,7 +74,23 @@ export default class Detail extends React.Component<Props, State> {
       size: this.state.page.size,
     };
     this.fetchData(data);
+    AsyncStorage.getItem(this.state.novel.id.toString()).then(str => {
+      if (str) {
+        this.setState({
+          record: JSON.parse(str),
+        });
+      }
+    });
   }
+
+  static getDerivedStateFromProps(props, state) {
+    if (props.route.params.chapter) {
+      return {
+        record: props.route.params.chapter,
+      };
+    }
+  }
+
   getPage(): Page {
     let data: Page = {
       bookId: this.state.novel.id,
@@ -160,6 +179,17 @@ export default class Detail extends React.Component<Props, State> {
               <Text style={styles.infoText}>
                 作者：{this.state.novel.author.name}
               </Text>
+              {this.state.record ? (
+                <TouchableOpacity
+                  onPress={() => {
+                    this.props.navigation.navigate('Read', {
+                      chapter: this.state.record,
+                      novel: this.state.novel,
+                    });
+                  }}>
+                  <Text style={styles.continue}>继续阅读</Text>
+                </TouchableOpacity>
+              ) : null}
             </View>
           </View>
           <View style={styles.introduce}>
@@ -323,5 +353,17 @@ const styles = StyleSheet.create({
     height: 20,
     textAlign: 'center',
     textAlignVertical: 'center',
+  },
+  continue: {
+    fontSize: 15,
+    width: width * 0.2,
+    paddingTop: 0.01 * width,
+    paddingBottom: 0.01 * width,
+    marginTop: 0.03 * width,
+    marginBottom: 0.03 * width,
+    marginLeft: 0.1 * width,
+    textAlign: 'center',
+    backgroundColor: 'orange',
+    color: 'white',
   },
 });

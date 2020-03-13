@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Dimensions,
   TouchableNativeFeedback,
+  AsyncStorage,
 } from 'react-native';
 import {Chapter} from '../domain';
 import http from '../request';
@@ -22,7 +23,7 @@ type State = {
   loading: boolean,
 };
 
-async function nextChapter(chapterId: number) {
+async function nextChapter(chapterId: number, novelId: number) {
   let param = {
     chapterId: chapterId,
   };
@@ -31,6 +32,7 @@ async function nextChapter(chapterId: number) {
     return Promise.reject(res);
   }
   let chapter: Chapter = res.data;
+  AsyncStorage.setItem(novelId.toString(), JSON.stringify(chapter));
   param = {
     id: chapter.contentId,
   };
@@ -76,7 +78,7 @@ export default class Read extends React.Component<Props, State> {
     this.setState({
       loading: true,
     });
-    nextChapter(current.nextChapterId).then(chapter => {
+    nextChapter(current.nextChapterId, this.state.novel.id).then(chapter => {
       this.setState({
         chapters: [...this.state.chapters, chapter],
         currentChapter: chapter,
@@ -97,7 +99,10 @@ export default class Read extends React.Component<Props, State> {
       <View style={styles.container}>
         <TouchableNativeFeedback
           onPress={() => {
-            this.props.navigation.navigate('Detail', {novel: this.state.novel});
+            this.props.navigation.navigate('Detail', {
+              novel: this.state.novel,
+              chapter: this.state.currentChapter,
+            });
           }}>
           <View style={styles.header}>
             <Text style={styles.headerTitle}>{this.state.novel.name}</Text>
