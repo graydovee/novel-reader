@@ -11,6 +11,7 @@ import {
   LayoutAnimation,
   NativeModules,
   TextInput,
+  PanResponder,
 } from 'react-native';
 import {getCover, Novel, Chapter} from '../domain';
 import http from '../request';
@@ -65,6 +66,7 @@ export default class Detail extends React.Component<Props, State> {
     this.renderInfo = this.renderInfo.bind(this);
     this.searchChapter = this.searchChapter.bind(this);
     this.fetchData = this.fetchData.bind(this);
+    this.hiddenIntro = this.hiddenIntro.bind(this);
 
     let data: Page = {
       bookId: this.state.novel.id,
@@ -78,6 +80,61 @@ export default class Detail extends React.Component<Props, State> {
           record: JSON.parse(str),
         });
       }
+    });
+
+    this._panResponder = PanResponder.create({
+      // Ask to be the responder:
+      onStartShouldSetPanResponder: (evt, gestureState) => true,
+      onStartShouldSetPanResponderCapture: (evt, gestureState) => {
+        let {dx, dy} = gestureState;
+        return Math.abs(dx) > 5 || Math.abs(dy) > 5;
+      },
+      onMoveShouldSetPanResponder: (evt, gestureState) => true,
+      onMoveShouldSetPanResponderCapture: (evt, gestureState) => true,
+
+      onPanResponderGrant: (evt, gestureState) => {
+        // The gesture has started. Show visual feedback so the user knows
+        // what is happening!
+        // gestureState.d{x,y} will be set to zero now UIManager
+        if (!this.introHeight) {
+          this.introDoc.measure((x, y, widths, heights, pageX, pageY) => {
+            this.introHeight = heights;
+          });
+        }
+      },
+      onPanResponderMove: (evt, gestureState) => {
+        // The most recent move distance is gestureState.move{X,Y}
+        // The accumulated gesture distance since becoming responder is
+        // gestureState.d{x,y}
+        let dy = gestureState.dy;
+        if (dy < 0 && this.introHeight) {
+          this.nowHeight =
+            this.introHeight + dy < 1 ? 1 : this.introHeight + dy;
+          this.introDoc.setNativeProps({
+            height: this.nowHeight,
+          });
+        }
+      },
+      onPanResponderTerminationRequest: (evt, gestureState) => true,
+      onPanResponderRelease: (evt, gestureState) => {
+        // The user has released all touches while this view is the
+        // responder. This typically means a gesture has succeeded
+        this.introDoc.setNativeProps({
+          height: 'auto',
+        });
+        if (gestureState.dy < -50 && !this.state.hidden) {
+          this.hiddenIntro();
+        }
+      },
+      onPanResponderTerminate: (evt, gestureState) => {
+        // Another component has become the responder, so this gesture
+        // should be cancelled
+      },
+      onShouldBlockNativeResponder: (evt, gestureState) => {
+        // Returns whether this component should block native components from becoming the JS
+        // responder. Returns true by default. Is currently only supported on android.
+        return true;
+      },
     });
   }
 
@@ -146,6 +203,19 @@ export default class Detail extends React.Component<Props, State> {
       });
     });
   }
+  hiddenIntro() {
+    LayoutAnimation.linear();
+    LayoutAnimation.configureNext({
+      duration: 100,
+      update: {
+        type: 'linear',
+        property: 'opacity',
+      },
+    });
+    this.setState({
+      hidden: !this.state.hidden,
+    });
+  }
   renderChapter({item}) {
     return (
       <TouchableOpacity
@@ -164,7 +234,10 @@ export default class Detail extends React.Component<Props, State> {
       return <View />;
     } else {
       return (
-        <View>
+        <View
+          {...this._panResponder.panHandlers}
+          collapsable={false}
+          ref={doc => (this.introDoc = doc)}>
           <View style={styles.info}>
             <Image
               source={{uri: getCover(this.state.novel.id)}}
@@ -185,6 +258,16 @@ export default class Detail extends React.Component<Props, State> {
                   }}>
                   <Text style={styles.continue}>继续阅读</Text>
                 </TouchableOpacity>
+              ) : this.state.chapters.length > 0 ? (
+                <TouchableOpacity
+                  onPress={() => {
+                    this.props.navigation.navigate('Read', {
+                      chapter: this.state.chapters[0],
+                      novel: this.state.novel,
+                    });
+                  }}>
+                  <Text style={styles.continue}>开始阅读</Text>
+                </TouchableOpacity>
               ) : null}
             </View>
           </View>
@@ -204,17 +287,7 @@ export default class Detail extends React.Component<Props, State> {
           <View style={styles.ChapterListBox}>
             <TouchableNativeFeedback
               onPress={() => {
-                LayoutAnimation.linear();
-                LayoutAnimation.configureNext({
-                  duration: 100,
-                  update: {
-                    type: 'linear',
-                    property: 'opacity',
-                  },
-                });
-                this.setState({
-                  hidden: !this.state.hidden,
-                });
+                this.hiddenIntro();
               }}>
               <View style={styles.chapterListTitle}>
                 <Text style={styles.title}>
