@@ -2,7 +2,6 @@ import React from 'react';
 import Home from '../page/Home';
 import Search from '../page/Search';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
-import Ionicons from 'react-native-vector-icons/Ionicons';
 import Foundation from 'react-native-vector-icons/Foundation';
 
 const Tab = createBottomTabNavigator();
