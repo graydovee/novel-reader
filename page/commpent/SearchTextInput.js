@@ -6,6 +6,7 @@ import {
   Text,
   StyleSheet,
   Dimensions,
+  Keyboard,
 } from 'react-native';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 
@@ -44,6 +45,7 @@ export default class Home extends React.Component<Props, State> {
           />
           <TouchableOpacity
             onPress={() => {
+              Keyboard.dismiss();
               this.props.fetchData(this.state.inputValue);
             }}
             style={styles.searchView}>

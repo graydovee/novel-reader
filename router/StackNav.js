@@ -15,7 +15,9 @@ export default class StackNav extends React.Component {
           component={BottomTabNav}
           options={{
             ...TransitionPresets.SlideFromRightIOS,
-            title: '小说阅读',
+            header() {
+              return null;
+            },
           }}
         />
         <Stack.Screen

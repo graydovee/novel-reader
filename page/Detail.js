@@ -12,6 +12,7 @@ import {
   NativeModules,
   TextInput,
   PanResponder,
+  Platform,
 } from 'react-native';
 import {getCover, Novel, Chapter} from '../domain';
 import http from '../request';
@@ -20,8 +21,11 @@ import AsyncStorage from '@react-native-community/async-storage';
 
 const {UIManager} = NativeModules;
 
-UIManager.setLayoutAnimationEnabledExperimental &&
-  UIManager.setLayoutAnimationEnabledExperimental(true);
+if (Platform.OS === 'android') {
+  if (UIManager.setLayoutAnimationEnabledExperimental) {
+    UIManager.setLayoutAnimationEnabledExperimental(true);
+  }
+}
 
 type Page = {
   bookId: number,
@@ -204,14 +208,9 @@ export default class Detail extends React.Component<Props, State> {
     });
   }
   hiddenIntro() {
-    LayoutAnimation.linear();
-    LayoutAnimation.configureNext({
-      duration: 100,
-      update: {
-        type: 'linear',
-        property: 'opacity',
-      },
-    });
+    LayoutAnimation.configureNext(
+      LayoutAnimation.create(100, 'linear', 'opacity'),
+    );
     this.setState({
       hidden: !this.state.hidden,
     });
@@ -230,54 +229,51 @@ export default class Detail extends React.Component<Props, State> {
     );
   }
   renderInfo() {
-    if (this.state.hidden) {
-      return <View />;
-    } else {
-      return (
-        <View
-          {...this._panResponder.panHandlers}
-          collapsable={false}
-          ref={doc => (this.introDoc = doc)}>
-          <View style={styles.info}>
-            <Image
-              source={{uri: getCover(this.state.novel.id)}}
-              style={styles.thumbnail}
-            />
-            <View style={styles.rightContainer}>
-              <Text style={styles.infoText}>{this.state.novel.name}</Text>
-              <Text style={styles.infoText}>
-                作者：{this.state.novel.author.name}
-              </Text>
-              {this.state.record ? (
-                <TouchableOpacity
-                  onPress={() => {
-                    this.props.navigation.navigate('Read', {
-                      chapter: this.state.record,
-                      novel: this.state.novel,
-                    });
-                  }}>
-                  <Text style={styles.continue}>继续阅读</Text>
-                </TouchableOpacity>
-              ) : this.state.chapters.length > 0 ? (
-                <TouchableOpacity
-                  onPress={() => {
-                    this.props.navigation.navigate('Read', {
-                      chapter: this.state.chapters[0],
-                      novel: this.state.novel,
-                    });
-                  }}>
-                  <Text style={styles.continue}>开始阅读</Text>
-                </TouchableOpacity>
-              ) : null}
-            </View>
-          </View>
-          <View style={styles.introduce}>
-            <Text style={styles.title}>简介：</Text>
-            <Text>{this.state.novel.introduce}</Text>
+    return (
+      <View
+        {...this._panResponder.panHandlers}
+        collapsable={false}
+        style={this.state.hidden ? {height: 0} : {opacity: 1}}
+        ref={doc => (this.introDoc = doc)}>
+        <View style={styles.info}>
+          <Image
+            source={{uri: getCover(this.state.novel.id)}}
+            style={styles.thumbnail}
+          />
+          <View style={styles.rightContainer}>
+            <Text style={styles.infoText}>{this.state.novel.name}</Text>
+            <Text style={styles.infoText}>
+              作者：{this.state.novel.author.name}
+            </Text>
+            {this.state.record ? (
+              <TouchableOpacity
+                onPress={() => {
+                  this.props.navigation.navigate('Read', {
+                    chapter: this.state.record,
+                    novel: this.state.novel,
+                  });
+                }}>
+                <Text style={styles.continue}>继续阅读</Text>
+              </TouchableOpacity>
+            ) : this.state.chapters.length > 0 ? (
+              <TouchableOpacity
+                onPress={() => {
+                  this.props.navigation.navigate('Read', {
+                    chapter: this.state.chapters[0],
+                    novel: this.state.novel,
+                  });
+                }}>
+                <Text style={styles.continue}>开始阅读</Text>
+              </TouchableOpacity>
+            ) : null}
           </View>
         </View>
-      );
-    }
+        <View style={styles.introduce}>
+          <Text style={styles.title}>简介：</Text>
+          <Text>{this.state.novel.introduce}</Text>
+        </View>
+      </View>
+    );
   }
   render() {
     return (
