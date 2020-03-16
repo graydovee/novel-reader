@@ -5,6 +5,7 @@ import Detail from '../page/Detail';
 import SearchDetail from '../page/SearchDetail';
 import Read from '../page/Read';
 import SearchRead from '../page/SearchRead';
+import Update from '../page/Update';
 
 const Stack = createStackNavigator();
 
@@ -54,6 +55,14 @@ export default class StackNav extends React.Component {
             header() {
               return null;
             },
+          }}
+        />
+        <Stack.Screen
+          name="Update"
+          component={Update}
+          options={{
+            ...TransitionPresets.SlideFromRightIOS,
+            title: '忽略',
           }}
         />
       </Stack.Navigator>

@@ -33,3 +33,17 @@ const CoverBaseUrl = 'https://admin.ndovel.com/cover/';
 export function getCover(id: number) {
   return CoverBaseUrl + id.toString();
 }
+
+export class Version {
+  constructor() {
+    this.checked = false;
+  }
+  static version = '1.0.0';
+  static getChecked() {
+    return this.checked;
+  }
+  static check(version) {
+    this.checked = true;
+    return version === Version.version;
+  }
+}

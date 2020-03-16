@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import http from '../request';
 import SearchTextInput from './commpent/SearchTextInput';
-import {Novel, getCover} from '../domain';
+import {Novel, getCover, Version} from '../domain';
 
 const {width} = Dimensions.get('window');
 
@@ -44,6 +44,13 @@ export default class Home extends React.Component<Props, State> {
     this.renderNovel = this.renderNovel.bind(this);
     this.fetchData = this.fetchData.bind(this);
     this.search = this.search.bind(this);
+    if (!Version.getChecked()) {
+      http.post('/version').then(res => {
+        if (!Version.check(res.data)) {
+          this.props.navigation.navigate('Update');
+        }
+      });
+    }
 
     this.fetchData();
   }
