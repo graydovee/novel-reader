@@ -10,14 +10,14 @@ import {
   TouchableNativeFeedback,
   LayoutAnimation,
   NativeModules,
-  TextInput,
   PanResponder,
   Platform,
 } from 'react-native';
-import {getCover, Novel, Chapter} from '../domain';
+import {Novel, Chapter, Content, Store} from '../domain';
 import http from '../request';
 import EvilIcons from 'react-native-vector-icons/EvilIcons';
-import AsyncStorage from '@react-native-community/async-storage';
+import Loading from './commpent/Loading';
+
 const {UIManager} = NativeModules;
 
 if (Platform.OS === 'android') {
@@ -26,20 +26,12 @@ if (Platform.OS === 'android') {
   }
 }
 
-type Page = {
-  bookId: number,
-  index: number,
-  size: number,
-};
-
 type State = {
   chapters: Array<Chapter>,
   novel: Novel,
-  page: Page,
-  totalPages: 1,
   hidden: boolean,
-  skipText: string,
-  record: Chapter,
+  coverUrl: string,
+  loading: boolean,
 };
 
 type Props = {};
@@ -51,39 +43,53 @@ export default class Detail extends React.Component<Props, State> {
     super(props);
     this.state = {
       chapters: [],
-      novel: props.route.params.novel,
-      page: {
-        index: 1,
-        size: 50,
+      novel: {
+        author: {
+          name: '',
+        },
+        name: '',
+        introduce: '',
       },
-      totalPages: 1,
+      coverUrl: '',
       hidden: false,
-      skipText: '',
-      record: null,
+      loading: true,
     };
-    props.navigation.setOptions({
-      title: props.route.params.novel.name,
+    this.props.navigation.setOptions({
+      title: props.route.params.novel.title,
     });
     this.renderChapter = this.renderChapter.bind(this);
-    this.getNextPage = this.getNextPage.bind(this);
     this.renderInfo = this.renderInfo.bind(this);
-    this.searchChapter = this.searchChapter.bind(this);
-    this.fetchData = this.fetchData.bind(this);
     this.hiddenIntro = this.hiddenIntro.bind(this);
+    this.read = this.read.bind(this);
 
-    let data: Page = {
-      bookId: this.state.novel.id,
-      index: 0,
-      size: this.state.page.size,
+    let param = {
+      url: props.route.params.novel.url,
     };
-    this.fetchData(data);
-    AsyncStorage.getItem(this.state.novel.id.toString()).then(str => {
-      if (str) {
+
+    http
+      .post('/spider/index', param)
+      .then(res => {
+        if (res.code === 200) {
+          let data = res.data;
+          this.setState({
+            novel: {
+              name: data.bookName,
+              author: {
+                name: data.authorName,
+              },
+              introduce: data.introduce,
+            },
+            coverUrl: data.coverUrl,
+            chapters: data.chapters,
+            loading: false,
+          });
+        }
+      })
+      .catch(res => {
         this.setState({
-          record: JSON.parse(str),
+          loading: false,
         });
-      }
-    });
+      });
 
     this._panResponder = PanResponder.create({
       // Ask to be the responder:
@@ -140,70 +146,10 @@ export default class Detail extends React.Component<Props, State> {
       },
     });
   }
-
-  static getDerivedStateFromProps(props, state) {
-    if (props.route.params.chapter) {
-      return {
-        record: props.route.params.chapter,
-      };
-    }
-    return null;
-  }
-
-  getNextPage(): Page {
-    let data: Page = {
-      bookId: this.state.novel.id,
-      index: this.state.page.index,
-      size: this.state.page.size,
-    };
-    this.setState({
-      page: {
-        index: this.state.page.index + 1,
-        size: this.state.page.size,
-      },
-    });
-    return data;
-  }
-  fetchData(param) {
-    if (!param) {
-      if (this.state.page.index >= this.state.totalPages) {
-        return;
-      }
-      param = this.getNextPage();
-    }
-    http.get('/chapter', param).then(res => {
-      this.setState({
-        chapters: [...this.state.chapters, ...res.data.content],
-        totalPages: res.data.totalPages,
-        skipText: this.state.page.index.toString(),
-      });
-    });
-  }
-  searchChapter(text: string) {
-    let index: number;
-    index = text ? parseInt(text, 10) - 1 : 0;
-    if (index < 0) {
-      index = 0;
-    } else if (index >= this.state.totalPages) {
-      index = this.state.totalPages - 1;
-    }
-    let param: Page = {
-      bookId: this.state.novel.id,
-      index: index,
-      size: this.state.page.size,
-    };
-    this.setState({
-      page: {
-        index: index + 1,
-        size: this.state.page.size,
-      },
-    });
-    http.get('/chapter', param).then(res => {
-      this.setState({
-        chapters: res.data.content,
-        totalPages: res.data.totalPages,
-        skipText: this.state.page.index.toString(),
-      });
+  read(chapter: Chapter) {
+    this.props.navigation.navigate('SearchRead', {
+      chapter: chapter,
+      novel: this.state.novel,
     });
   }
   hiddenIntro() {
@@ -218,10 +164,7 @@ export default class Detail extends React.Component<Props, State> {
     return (
       <TouchableOpacity
         onPress={() => {
-          this.props.navigation.navigate('Read', {
-            chapter: item,
-            novel: this.state.novel,
-          });
+          this.read(item);
         }}>
         <Text style={styles.chapter}>{item.title}</Text>
       </TouchableOpacity>
@@ -236,7 +179,11 @@ export default class Detail extends React.Component<Props, State> {
         ref={doc => (this.introDoc = doc)}>
         <View style={styles.info}>
           <Image
-            source={{uri: getCover(this.state.novel.id)}}
+            source={
+              this.state.coverUrl
+                ? {uri: this.state.coverUrl}
+                : require('../images/nopic.jpg')
+            }
             style={styles.thumbnail}
           />
           <View style={styles.rightContainer}>
@@ -244,27 +191,6 @@ export default class Detail extends React.Component<Props, State> {
             <Text style={styles.infoText}>
               作者：{this.state.novel.author.name}
             </Text>
-            {this.state.record ? (
-              <TouchableOpacity
-                onPress={() => {
-                  this.props.navigation.navigate('Read', {
-                    chapter: this.state.record,
-                    novel: this.state.novel,
-                  });
-                }}>
-                <Text style={styles.continue}>继续阅读</Text>
-              </TouchableOpacity>
-            ) : this.state.chapters.length > 0 ? (
-              <TouchableOpacity
-                onPress={() => {
-                  this.props.navigation.navigate('Read', {
-                    chapter: this.state.chapters[0],
-                    novel: this.state.novel,
-                  });
-                }}>
-                <Text style={styles.continue}>开始阅读</Text>
-              </TouchableOpacity>
-            ) : null}
           </View>
         </View>
         <View style={styles.introduce}>
@@ -291,60 +217,16 @@ export default class Detail extends React.Component<Props, State> {
                 </Text>
               </View>
             </TouchableNativeFeedback>
-            <View style={styles.pager}>
-              <Text style={styles.pageText}>第</Text>
-              <TextInput
-                style={styles.input}
-                value={this.state.skipText}
-                blurOnSubmit={false}
-                caretHidden={true}
-                clearTextOnFocus={true}
-                keyboardType={'number-pad'}
-                ref={e => (this.textInput = e)}
-                onChangeText={text => {
-                  this.setState({
-                    skipText: text,
-                  });
-                }}
-                onFocus={() => {
-                  this.setState({
-                    skipText: '',
-                  });
-                }}
-              />
-              <Text style={styles.pageText}>
-                /&nbsp;{this.state.totalPages}页
-              </Text>
-              <TouchableOpacity
-                onPress={() => {
-                  this.textInput.blur();
-                  this.searchChapter(this.state.skipText);
-                }}>
-                <Text style={styles.skip}>跳转</Text>
-              </TouchableOpacity>
-            </View>
           </View>
 
           <FlatList
             data={this.state.chapters}
             renderItem={this.renderChapter}
-            keyExtractor={item => item.id.toString()}
-            onEndReachedThreshold={0.1}
-            onEndReached={() => {
-              this.fetchData();
-            }}
+            keyExtractor={item => item.url}
             ListEmptyComponent={<Text style={styles.tip}>暂无数据</Text>}
-            ListFooterComponent={
-              <View>
-                <Text style={styles.tip}>
-                  {this.state.page.index < this.state.totalPages
-                    ? '正在加载更多...'
-                    : '没有更多了！'}
-                </Text>
-              </View>
-            }
           />
         </View>
+        {this.state.coverUrl ? null : <Loading />}
       </View>
     );
   }
@@ -409,25 +291,6 @@ const styles = StyleSheet.create({
   ChapterListBox: {
     flexDirection: 'row',
   },
-  pager: {
-    flex: 1,
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginRight: 0.05 * width,
-  },
-  pageText: {
-    paddingTop: 0.05 * width,
-    paddingBottom: 0.05 * width,
-    fontSize: 14,
-  },
-  input: {
-    padding: 0,
-    marginTop: 0.05 * width,
-    height: 20,
-    textAlign: 'center',
-    textAlignVertical: 'center',
-    color: '#409EFF',
-  },
   continue: {
     fontSize: 15,
     width: width * 0.2,
@@ -439,12 +302,5 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     backgroundColor: 'orange',
     color: 'white',
-  },
-  skip: {
-    paddingTop: 0.05 * width,
-    paddingBottom: 0.05 * width,
-    fontSize: 14,
-    marginLeft: 0.02 * width,
-    color: '#409EFF',
   },
 });

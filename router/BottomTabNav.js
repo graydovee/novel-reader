@@ -30,7 +30,7 @@ export default class BottomTabNav extends React.Component {
           name="Search"
           component={Search}
           options={{
-            title: '信息',
+            title: '搜索',
             tabBarIcon: param => {
               return (
                 <Foundation
