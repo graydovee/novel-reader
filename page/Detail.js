@@ -2,20 +2,18 @@ import React from 'react';
 import {
   View,
   Text,
-  Image,
   StyleSheet,
   Dimensions,
   FlatList,
   TouchableOpacity,
   TouchableNativeFeedback,
-  LayoutAnimation,
   NativeModules,
   TextInput,
-  PanResponder,
   Platform,
 } from 'react-native';
 import {getCover, Novel, Chapter} from '../domain';
 import http from '../request';
+import NovelDetail from './commpent/NovelDetail';
 import EvilIcons from 'react-native-vector-icons/EvilIcons';
 import AsyncStorage from '@react-native-community/async-storage';
 const {UIManager} = NativeModules;
@@ -66,10 +64,8 @@ export default class Detail extends React.Component<Props, State> {
     });
     this.renderChapter = this.renderChapter.bind(this);
     this.getNextPage = this.getNextPage.bind(this);
-    this.renderInfo = this.renderInfo.bind(this);
     this.searchChapter = this.searchChapter.bind(this);
     this.fetchData = this.fetchData.bind(this);
-    this.hiddenIntro = this.hiddenIntro.bind(this);
 
     let data: Page = {
       bookId: this.state.novel.id,
@@ -83,61 +79,6 @@ export default class Detail extends React.Component<Props, State> {
           record: JSON.parse(str),
         });
       }
-    });
-
-    this._panResponder = PanResponder.create({
-      // Ask to be the responder:
-      onStartShouldSetPanResponder: (evt, gestureState) => true,
-      onStartShouldSetPanResponderCapture: (evt, gestureState) => {
-        let {dx, dy} = gestureState;
-        return Math.abs(dx) > 5 || Math.abs(dy) > 5;
-      },
-      onMoveShouldSetPanResponder: (evt, gestureState) => true,
-      onMoveShouldSetPanResponderCapture: (evt, gestureState) => true,
-
-      onPanResponderGrant: (evt, gestureState) => {
-        // The gesture has started. Show visual feedback so the user knows
-        // what is happening!
-        // gestureState.d{x,y} will be set to zero now UIManager
-        if (!this.introHeight) {
-          this.introDoc.measure((x, y, widths, heights, pageX, pageY) => {
-            this.introHeight = heights;
-          });
-        }
-      },
-      onPanResponderMove: (evt, gestureState) => {
-        // The most recent move distance is gestureState.move{X,Y}
-        // The accumulated gesture distance since becoming responder is
-        // gestureState.d{x,y}
-        let dy = gestureState.dy;
-        if (dy < 0 && this.introHeight) {
-          this.nowHeight =
-            this.introHeight + dy < 1 ? 1 : this.introHeight + dy;
-          this.introDoc.setNativeProps({
-            height: this.nowHeight,
-          });
-        }
-      },
-      onPanResponderTerminationRequest: (evt, gestureState) => true,
-      onPanResponderRelease: (evt, gestureState) => {
-        // The user has released all touches while this view is the
-        // responder. This typically means a gesture has succeeded
-        this.introDoc.setNativeProps({
-          height: 'auto',
-        });
-        if (gestureState.dy < -50 && !this.state.hidden) {
-          this.hiddenIntro();
-        }
-      },
-      onPanResponderTerminate: (evt, gestureState) => {
-        // Another component has become the responder, so this gesture
-        // should be cancelled
-      },
-      onShouldBlockNativeResponder: (evt, gestureState) => {
-        // Returns whether this component should block native components from becoming the JS
-        // responder. Returns true by default. Is currently only supported on android.
-        return true;
-      },
     });
   }
 
@@ -206,14 +147,6 @@ export default class Detail extends React.Component<Props, State> {
       });
     });
   }
-  hiddenIntro() {
-    LayoutAnimation.configureNext(
-      LayoutAnimation.create(100, 'linear', 'opacity'),
-    );
-    this.setState({
-      hidden: !this.state.hidden,
-    });
-  }
   renderChapter({item}) {
     return (
       <TouchableOpacity
@@ -227,62 +160,38 @@ export default class Detail extends React.Component<Props, State> {
       </TouchableOpacity>
     );
   }
-  renderInfo() {
-    return (
-      <View
-        {...this._panResponder.panHandlers}
-        collapsable={false}
-        style={this.state.hidden ? {height: 0} : {opacity: 1}}
-        ref={doc => (this.introDoc = doc)}>
-        <View style={styles.info}>
-          <Image
-            source={{uri: getCover(this.state.novel.id)}}
-            style={styles.thumbnail}
-          />
-          <View style={styles.rightContainer}>
-            <Text style={styles.infoText}>{this.state.novel.name}</Text>
-            <Text style={styles.infoText}>
-              作者：{this.state.novel.author.name}
-            </Text>
-            {this.state.record ? (
-              <TouchableOpacity
-                onPress={() => {
-                  this.props.navigation.navigate('Read', {
-                    chapter: this.state.record,
-                    novel: this.state.novel,
-                  });
-                }}>
-                <Text style={styles.continue}>继续阅读</Text>
-              </TouchableOpacity>
-            ) : this.state.chapters.length > 0 ? (
-              <TouchableOpacity
-                onPress={() => {
-                  this.props.navigation.navigate('Read', {
-                    chapter: this.state.chapters[0],
-                    novel: this.state.novel,
-                  });
-                }}>
-                <Text style={styles.continue}>开始阅读</Text>
-              </TouchableOpacity>
-            ) : null}
-          </View>
-        </View>
-        <View style={styles.introduce}>
-          <Text style={styles.title}>简介：</Text>
-          <Text>{this.state.novel.introduce}</Text>
-        </View>
-      </View>
-    );
-  }
   render() {
     return (
       <View style={styles.container}>
-        {this.renderInfo()}
+        <NovelDetail
+          cover={{uri: getCover(this.state.novel.id)}}
+          name={this.state.novel.name}
+          author={this.state.novel.author.name}
+          introduce={this.state.novel.introduce}
+          ref={detail => {
+            this.novelDetail = detail;
+          }}
+          buttonPress={() => {
+            this.props.navigation.navigate('Read', {
+              chapter: this.state.record
+                ? this.state.record
+                : this.state.chapters[0],
+              novel: this.state.novel,
+            });
+          }}
+          buttonText={
+            this.state.chapters && this.state.chapters.length
+              ? this.state.record
+                ? '继续阅读'
+                : '开始阅读'
+              : ''
+          }
+        />
         <View style={styles.chapterContainer}>
           <View style={styles.ChapterListBox}>
             <TouchableNativeFeedback
               onPress={() => {
-                this.hiddenIntro();
+                this.novelDetail.hiddenIntro();
               }}>
               <View style={styles.chapterListTitle}>
                 <Text style={styles.title}>
@@ -329,7 +238,7 @@ export default class Detail extends React.Component<Props, State> {
             data={this.state.chapters}
             renderItem={this.renderChapter}
             keyExtractor={item => item.id.toString()}
-            onEndReachedThreshold={0.1}
+            onEndReachedThreshold={0.3}
             onEndReached={() => {
               this.fetchData();
             }}
@@ -350,36 +259,10 @@ export default class Detail extends React.Component<Props, State> {
   }
 }
 
-const coverWidth = 0.3 * width;
-const coverHeight = (coverWidth * 81) / 53;
-
 const styles = StyleSheet.create({
-  thumbnail: {
-    width: coverWidth,
-    height: coverHeight,
-  },
   container: {
     flex: 1,
     margin: 0.05 * width,
-  },
-  info: {
-    flexDirection: 'row',
-    backgroundColor: 'white',
-    height: coverHeight + 0.1 * width,
-    padding: 0.05 * width,
-  },
-  rightContainer: {
-    marginLeft: 0.05 * width,
-  },
-  infoText: {
-    fontSize: 20,
-    width: width * 0.5,
-    paddingTop: 0.05 * width,
-    paddingBottom: 0.05 * width,
-  },
-  introduce: {
-    padding: 0.05 * width,
-    backgroundColor: 'white',
   },
   title: {
     fontSize: 18,
@@ -427,18 +310,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     textAlignVertical: 'center',
     color: '#409EFF',
-  },
-  continue: {
-    fontSize: 15,
-    width: width * 0.2,
-    paddingTop: 0.01 * width,
-    paddingBottom: 0.01 * width,
-    marginTop: 0.03 * width,
-    marginBottom: 0.03 * width,
-    marginLeft: 0.1 * width,
-    textAlign: 'center',
-    backgroundColor: 'orange',
-    color: 'white',
   },
   skip: {
     paddingTop: 0.05 * width,

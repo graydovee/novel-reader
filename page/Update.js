@@ -1,17 +1,5 @@
 import React from 'react';
-import {
-  StyleSheet,
-  Dimensions,
-  Text,
-  View,
-  Modal,
-  ActivityIndicator,
-  Linking,
-  TouchableOpacity,
-} from 'react-native';
-
-const SCREEN_WIDTH = Dimensions.get('window').width;
-const SCREEN_HEIGHT = Dimensions.get('window').height;
+import {StyleSheet, Text, View, Linking, TouchableOpacity} from 'react-native';
 
 export default class Update extends React.Component<Props, State> {
   open() {
