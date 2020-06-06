@@ -72,6 +72,10 @@ export default class Detail extends React.Component<Props, State> {
             chapters: data.chapters,
             loading: false,
           });
+        } else {
+          this.setState({
+            loading: false,
+          });
         }
       })
       .catch(res => {
