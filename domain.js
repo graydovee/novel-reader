@@ -41,7 +41,7 @@ export class Version {
   constructor() {
     this.checked = false;
   }
-  static version = '1.0.1';
+  static version = '1.1.0';
   static getChecked() {
     return this.checked;
   }
