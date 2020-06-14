@@ -64,10 +64,7 @@ export default class Search extends React.Component<Props, State> {
           this.props.navigation.navigate('SearchDetail', {novel: item});
         }}>
         <View style={styles.container}>
-          <Image
-            source={require('../images/nopic.jpg')}
-            style={styles.thumbnail}
-          />
+          <Image source={{uri: item.coverUrl}} style={styles.thumbnail} />
           <View style={styles.rightContainer}>
             <Text style={styles.name}>{item.title}</Text>
             <Text style={styles.author}>{item.author}</Text>

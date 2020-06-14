@@ -32,7 +32,10 @@ async function nextChapter(chapterId: number, novelId: number) {
     return Promise.reject(res);
   }
   let chapter: Chapter = res.data;
-  AsyncStorage.setItem(novelId.toString(), JSON.stringify(chapter));
+  AsyncStorage.setItem(
+    novelId.toString(),
+    JSON.stringify({id: chapter, date: new Date().getTime()}),
+  );
   param = {
     id: chapter.contentId,
   };

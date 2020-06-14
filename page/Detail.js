@@ -76,7 +76,7 @@ export default class Detail extends React.Component<Props, State> {
     AsyncStorage.getItem(this.state.novel.id.toString()).then(str => {
       if (str) {
         this.setState({
-          record: JSON.parse(str),
+          record: JSON.parse(str).id,
         });
       }
     });

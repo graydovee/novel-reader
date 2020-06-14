@@ -1,6 +1,9 @@
 import React from 'react';
 import Home from '../page/Home';
 import Search from '../page/Search';
+import Booklist from '../page/Booklist';
+import Popularitylist from '../page/Popularitylist';
+
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import Foundation from 'react-native-vector-icons/Foundation';
 
@@ -34,7 +37,7 @@ export default class BottomTabNav extends React.Component {
             tabBarIcon: param => {
               return (
                 <Foundation
-                  name={'indent-more'}
+                  name={'magnifying-glass'}
                   size={param.size}
                   style={{color: param.color}}
                 />
@@ -42,6 +45,39 @@ export default class BottomTabNav extends React.Component {
             },
           }}
         />
+        <Tab.Screen
+          name="Popularitylist"
+          component={Popularitylist}
+          options={{
+            title: '榜单',
+            tabBarIcon: param => {
+              return (
+                <Foundation
+                  name={'graph-bar'}
+                  size={param.size}
+                  style={{color: param.color}}
+                />
+              );
+            },
+          }}
+        />
+        <Tab.Screen
+          name="Booklist"
+          component={Booklist}
+          options={{
+            title: '书架',
+            tabBarIcon: param => {
+              return (
+                <Foundation
+                  name={'book-bookmark'}
+                  size={param.size}
+                  style={{color: param.color}}
+                />
+              );
+            },
+          }}
+        />
+
       </Tab.Navigator>
     );
   }
