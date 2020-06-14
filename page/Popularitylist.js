@@ -7,6 +7,7 @@ import {
   Dimensions,
   StyleSheet,
   SafeAreaView,
+  Platform,
   TouchableNativeFeedback,
 } from 'react-native';
 import http from '../request';
@@ -14,28 +15,97 @@ import {Novel, getCover, Version} from '../domain';
 
 const {width} = Dimensions.get('window');
 
-type Page = {
-  name: string,
+type Props1 = {};
+
+type Props = {
+  bookId: number,
+  visit: number,
   index: number,
-  size: number,
+  skip: Function,
 };
 
-type Props = {};
+type State2 = {
+  novel: Novel,
+};
 
 type State = {
   novels: Array<Novel>,
-  page: Page,
-  totalPages: number,
+  ranks: Array,
 };
 
-export default class SampleAppMovies extends React.Component<Props, State> {
+class Item extends React.Component<Props, State2> {
+  constructor(props) {
+    super(props);
+    this.state = {
+      novel: {
+        author: {},
+      },
+    };
+    this.fetchData = this.fetchData.bind(this);
+    this.fetchData();
+  }
+  fetchData() {
+    http.get('/find', {id: this.props.bookId}).then(res => {
+      this.setState({
+        novel: res.data,
+      });
+    });
+  }
+  getURI(id) {
+    let uri = getCover(id);
+    if (uri) {
+      return {uri: uri};
+    } else {
+      return require('../images/nopic.jpg');
+    }
+  }
+  render() {
+    return (
+      <View>
+        <TouchableNativeFeedback
+          onPress={() => {
+            if (this.state.novel) {
+              this.props.skip(this.state.novel.id);
+            }
+          }}>
+          <View>
+            {this.state.novel ? (
+              <View style={styles.container}>
+                <Image
+                  source={this.getURI(this.state.novel.id)}
+                  style={styles.thumbnail}
+                />
+                <View style={styles.rightContainer}>
+                  <Text style={styles.name}>{this.state.novel.name}</Text>
+                  <Text style={styles.author}>
+                    {this.state.novel.author.name}
+                  </Text>
+                </View>
+                <Text
+                  style={[
+                    styles.word,
+                    bgColor(this.props.index + 1),
+                    fontSize(this.props.index + 1),
+                  ]}>
+                  {this.props.index + 1}
+                </Text>
+              </View>
+            ) : null}
+          </View>
+        </TouchableNativeFeedback>
+      </View>
+    );
+  }
+}
+
+export default class SampleAppMovies extends React.Component<Props1, State> {
   constructor(props) {
     super(props);
     this.state = {
       novels: [],
+      ranks: [],
     };
 
-    this.renderNovel = this.renderNovel.bind(this);
     this.fetchData = this.fetchData.bind(this);
     if (!Version.getChecked()) {
       http.post('/version').then(res => {
@@ -48,28 +118,33 @@ export default class SampleAppMovies extends React.Component<Props, State> {
     this.fetchData();
   }
   fetchData() {
-    http.get('/topBook?size=20').then(res => {
+    http.get('/topBook').then(res => {
       this.setState({
-        novels: res.data,
+        ranks: res.data,
       });
+      this.load();
     });
+  }
+
+  load() {
+    this.setState({
+      novels: [...this.state.novels, ...this.state.ranks.slice(0, 10)],
+      ranks: this.state.ranks.splice(10),
+    });
+  }
+
+  navigate(id) {
+    this.props.navigation.navigate('Detail', {novel: id});
   }
 
   renderNovel({item, index}) {
     return (
-      <TouchableNativeFeedback
-        onPress={() => {
-          this.props.navigation.navigate('Detail', {novel: item});
-        }}>
-        <View style={styles.container}>
-          <Image source={{uri: getCover(item.id)}} style={styles.thumbnail} />
-          <View style={styles.rightContainer}>
-            <Text style={styles.name}>{item.name}</Text>
-            <Text style={styles.author}>{item.author.name}</Text>
-          </View>
-          <Text style={[styles.word, bgColor(index + 1)]}>{index + 1}</Text>
-        </View>
-      </TouchableNativeFeedback>
+      <Item
+        visit={item.visit}
+        bookId={item.bookId}
+        index={index}
+        skip={this.navigate.bind(this)}
+      />
     );
   }
 
@@ -82,15 +157,19 @@ export default class SampleAppMovies extends React.Component<Props, State> {
 
         <FlatList
           data={this.state.novels}
-          renderItem={this.renderNovel}
+          renderItem={this.renderNovel.bind(this)}
           style={styles.list}
-          keyExtractor={item => item.id.toString()}
+          keyExtractor={(item, index) => index.toString()}
           ListEmptyComponent={<Text style={styles.tip}>暂无数据</Text>}
           ListFooterComponent={
             <View>
               <Text style={styles.tip}>没有更多了！</Text>
             </View>
           }
+          onEndReachedThreshold={0.3}
+          onEndReached={() => {
+            this.load();
+          }}
         />
       </SafeAreaView>
     );
@@ -109,11 +188,25 @@ function bgColor(index) {
   }
 }
 
+function fontSize(index) {
+  if (index > 999) {
+    return {fontSize: 10};
+  } else if (index > 99) {
+    return {fontSize: 12};
+  } else {
+    return {fontSize: 18};
+  }
+}
+
 const styles = StyleSheet.create({
   word: {
-    fontSize: 20,
     width: 30,
     height: 30,
+    ...Platform.select({
+      ios: {lineHeight: 30},
+      android: {},
+    }),
+    textAlignVertical: 'center',
     textAlign: 'center',
     borderRadius: 15,
     backgroundColor: '#DA4444',

@@ -31,6 +31,9 @@ export type Chapter = {
 const CoverBaseUrl = 'https://admin.ndovel.com/cover/';
 
 export function getCover(id: number) {
+  if (!id) {
+    return '';
+  }
   return CoverBaseUrl + id.toString();
 }
 
@@ -38,7 +41,7 @@ export class Version {
   constructor() {
     this.checked = false;
   }
-  static version = '1.0.0';
+  static version = '1.0.1';
   static getChecked() {
     return this.checked;
   }

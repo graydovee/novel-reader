@@ -31,7 +31,6 @@ export default class Home extends React.Component<Props, State> {
     };
 
     this.renderNovel = this.renderNovel.bind(this);
-    this.loadData = this.loadData.bind(this);
     if (!Version.getChecked()) {
       http.post('/version').then(res => {
         if (!Version.check(res.data)) {
@@ -39,16 +38,13 @@ export default class Home extends React.Component<Props, State> {
         }
       });
     }
-    this.loadData();
+    this.getMessage.bind(this)();
   }
-  loadData() {
+  async getMessage() {
     this.setState({
       novels: [],
       refresh: true,
     });
-    this.getMessage();
-  }
-  async getMessage() {
     let ret = [];
     let keyArray = await AsyncStorage.getAllKeys();
     for (let key of keyArray) {
@@ -103,7 +99,7 @@ export default class Home extends React.Component<Props, State> {
             </View>
           }
           refreshing={this.state.refresh}
-          onRefresh={this.loadData}
+          onRefresh={this.getMessage.bind(this)}
         />
       </SafeAreaView>
     );
