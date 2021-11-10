@@ -49,7 +49,7 @@
                 </el-pagination>
             </el-col>
         </el-row>
-        <p id="license" v-if="isPC"><a href='http://www.beian.miit.gov.cn' target="_blank">浙ICP备18017400号-4</a></p>
+        <p id="license" v-if="isPC"><a href='https://beian.miit.gov.cn/' target="_blank">浙ICP备18017400号-4</a></p>
     </div>
 </template>
 
